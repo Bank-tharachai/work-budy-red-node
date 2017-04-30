@@ -1,0 +1,521 @@
+[
+    {
+        "id": "620cbf5c.565f3",
+        "type": "debug",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "payload",
+        "x": 2285.5,
+        "y": 156,
+        "wires": []
+    },
+    {
+        "id": "a74bcd6d.cbfd7",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "[date, time, time] with month",
+        "func": "var str = msg.payload.toLowerCase();\n\nvar words = str.split(\" \");\nvar numbers = []\nvar english_numbers = [\n    \"zero\",\n    \"one\",\n    \"two\",\n    \"three\",\n    \"four\",\n    \"five\",\n    \"six\",\n    \"seven\",\n    \"eight\",\n    \"nine\",\n    \"ten\",\n    \"eleven\",\n    \"twelve\",\n    \"thirteen\",\n    \"fourteen\",\n    \"fifteen\",\n    \"sixteen\",\n    \"seventeen\",\n    \"eighteen\",\n    \"nineteen\",\n    \"twenty\",\n    \"twenty one\",\n    \"twenty two\",\n    \"twenty three\",\n    \"twenty four\",\n    \"twenty five\",\n    \"twenty six\",\n    \"twenty seven\",\n    \"twenty eight\",\n    \"twenty nine\",\n    \"thirty\",\n    \"thirty one\"\n];\nfor (var i = 0; i < words.length; ++i) {\n    var x = parseInt(words[i]);\n    if (x) {\n        numbers.push(x);\n    } else if (english_numbers.indexOf(words[i]) > -1) {\n        numbers.push(english_numbers.indexOf(words[i]));\n    }\n}\n\n\nwords = msg.payload.split(\" \");\nmonths = [\"January\", \"Febuary\",\"March\",\"April\",\"May\",\"June\",\"July\",\"August\",\"September\",\"October\",\"November\",\"December\"];\nmonths = months.map(x => x.toLowerCase());\nmonnum = [];\nfor (var i = 0; i < words.length; ++i) {\n    for (var j = 0; j < 12; ++j) {\n        if (words[i] === months[j]) {\n            numbers.push(j+1);\n        }\n    }\n}\n\n// var hoge = 10;\n// node.error(\"logging : \", hoge);\n// msg.loglog = numbers\n\n// return msg;\n\n\n// var mon = months[numbers[3] - 1];\n// msg.loglog = mon;\n// return msg;\n\nvar mon = numbers[3]// + \"\";\nvar day = numbers[0]// + \"\";\nvar st = numbers[1]// + \"\";\nvar end = numbers[2]// + \"\";\n// if(mon.length === 1){\n//     mon = \"0\"+mon;\n// }\n// if(day.length === 1){\n//     day = \"0\"+day;\n// }\n// if(st.length === 1){\n//     st = \"0\"+st;\n// }\n// if(end.length === 1){\n//     end = \"0\"+end;\n// }\nvar isotimes = [];\n\nvar current_time = new Date();\ncurrent_time.setMilliseconds(0);\ncurrent_time.setSeconds(0);\ncurrent_time.setMinutes(0);\n\nif (mon) current_time.setMonth(mon - 1);\nif (day) current_time.setDate(day);\n\nvar isotime_st = current_time.setHours(st - 9) / 1000;\nvar isotime_end = current_time.setHours(end - 9) / 1000;\n\n// var isotime_st = '2017-'+mon+'-'+day+'T'+st+':00+09:00';\n// var isotime_end = '2017-'+mon+'-'+day+'T'+end+':00+09:00';\nisotimes.push(isotime_st);\nisotimes.push(isotime_end);\n// isotimes.push(new Date());\nreturn {\n    topic: 'time',\n    payload: isotimes,\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1445.5,
+        "y": 35,
+        "wires": [
+            [
+                "348a3d87.d0ec32",
+                "3da6231b.074f5c"
+            ]
+        ]
+    },
+    {
+        "id": "e4d2b87f.1cabb8",
+        "type": "http request",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "url": "http://theworkbuddy.au-syd.mybluemix.net/verify_event",
+        "tls": "",
+        "x": 2014.5,
+        "y": 172,
+        "wires": [
+            [
+                "620cbf5c.565f3"
+            ]
+        ]
+    },
+    {
+        "id": "e47246ca.18f5d8",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "sending",
+        "func": "var str = msg.payload.time;\nvar users = msg.payload.id;\nvar event = msg.payload.event;\ntime1= str[0];\ntime2 = str[1];\n\nreturn {\n    payload: {\n        name: event,\n        starts_at: time1,\n        ends_at: time2,\n        users: users,\n    },\n    headers: {\n        \"Content-Type\": \"application/json\"\n    }\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1811.5,
+        "y": 210,
+        "wires": [
+            [
+                "e4d2b87f.1cabb8",
+                "ccf25188.9ad81"
+            ]
+        ]
+    },
+    {
+        "id": "348a3d87.d0ec32",
+        "type": "join",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "timeout": "",
+        "count": "3",
+        "x": 1673.5,
+        "y": 127,
+        "wires": [
+            [
+                "e47246ca.18f5d8",
+                "c56eac59.9f9cf"
+            ]
+        ]
+    },
+    {
+        "id": "e597fab4.abe788",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "say hello",
+        "func": "var sen = msg.payload;\n\nreturn {\n    topic: \"sentence\",\n    payload: sen,\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1304,
+        "y": 331,
+        "wires": [
+            [
+                "9670a999.9d82d8"
+            ]
+        ]
+    },
+    {
+        "id": "6f5f9c8b.2639c4",
+        "type": "http request",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "method": "GET",
+        "ret": "obj",
+        "url": "https://theworkbuddy.au-syd.mybluemix.net/user",
+        "tls": "",
+        "x": 1084,
+        "y": 507,
+        "wires": [
+            [
+                "8e4988c0.a4e248"
+            ]
+        ]
+    },
+    {
+        "id": "9670a999.9d82d8",
+        "type": "join",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "timeout": "",
+        "count": "2",
+        "x": 1446,
+        "y": 462,
+        "wires": [
+            [
+                "80f862a2.c4b7"
+            ]
+        ]
+    },
+    {
+        "id": "80f862a2.c4b7",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "Get ids",
+        "func": "words = msg.payload.sentence.split(\" \");\nusers = msg.payload.users;\nid = [];\nfor (var i = 0; i < words.length; ++i) {\n    for (var j = 0; j < users.length; ++j) {\n        if (words[i] == users[j].name) {\n            id.push(users[j].id);\n        }\n    }\n}\nreturn {\n    topic: 'id',\n    payload: id,\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1630.0000457763672,
+        "y": 338.99999237060547,
+        "wires": [
+            [
+                "348a3d87.d0ec32"
+            ]
+        ]
+    },
+    {
+        "id": "8e4988c0.a4e248",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "func": "\nreturn {\n    topic: \"users\",\n    payload: msg.payload.users\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1284,
+        "y": 505,
+        "wires": [
+            [
+                "9670a999.9d82d8"
+            ]
+        ]
+    },
+    {
+        "id": "fdd0e1b2.6cfe8",
+        "type": "watson-speech-to-text",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "continuous": true,
+        "speakerlabels": true,
+        "lang": "en-US",
+        "langhidden": "en-US",
+        "langcustom": "NoCustomisationSetting",
+        "langcustomhidden": "",
+        "band": "NarrowbandModel",
+        "bandhidden": "NarrowbandModel",
+        "password": "",
+        "x": 851.0713768005371,
+        "y": 110.00000381469727,
+        "wires": [
+            [
+                "9ac2027.be0d7",
+                "91f64b5d.2726c8"
+            ]
+        ]
+    },
+    {
+        "id": "1ff46d76.c60b73",
+        "type": "http in",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "url": "/fromPepper_3",
+        "method": "post",
+        "swaggerDoc": "",
+        "x": 324.00001525878906,
+        "y": 215.42858219146729,
+        "wires": [
+            [
+                "fdd0e1b2.6cfe8",
+                "6f5f9c8b.2639c4",
+                "a0c8260e.a62f88",
+                "e701cb76.bfe4b8"
+            ]
+        ]
+    },
+    {
+        "id": "9ac2027.be0d7",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "trans",
+        "func": "var trans = msg.transcription;\nreturn{ \npayload:trans\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1034.5,
+        "y": 109,
+        "wires": [
+            [
+                "e597fab4.abe788",
+                "a74bcd6d.cbfd7",
+                "3a937381.d781fc"
+            ]
+        ]
+    },
+    {
+        "id": "9a140314.7772e",
+        "type": "template",
+        "z": "eb5a1c14.7922a8",
+        "name": "makeResponseText",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "\"You want to have a meeting! I will check other's schedule. Please wait for a moment.\"",
+        "x": 2321.285690307617,
+        "y": 470.14286041259766,
+        "wires": [
+            [
+                "d875687.3dc3798",
+                "7b0cdaa6.a49744"
+            ]
+        ]
+    },
+    {
+        "id": "d875687.3dc3798",
+        "type": "http response",
+        "z": "eb5a1c14.7922a8",
+        "name": "returnToPepper",
+        "x": 2593.142837524414,
+        "y": 467.57142639160156,
+        "wires": []
+    },
+    {
+        "id": "766bb884.da1f98",
+        "type": "template",
+        "z": "eb5a1c14.7922a8",
+        "name": "makeResponseText",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "\"Sorry, I could not understand what you said. Please tell me again?\"",
+        "x": 2320.5,
+        "y": 520,
+        "wires": [
+            [
+                "d875687.3dc3798",
+                "7b0cdaa6.a49744"
+            ]
+        ]
+    },
+    {
+        "id": "7b0cdaa6.a49744",
+        "type": "debug",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "payload",
+        "x": 2622,
+        "y": 573,
+        "wires": []
+    },
+    {
+        "id": "a0c8260e.a62f88",
+        "type": "debug",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "payload",
+        "x": 798.5,
+        "y": 217.0000057220459,
+        "wires": []
+    },
+    {
+        "id": "e701cb76.bfe4b8",
+        "type": "http request",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "url": "http://theworkbuddy.au-syd.mybluemix.net/static/event.txt",
+        "tls": "",
+        "x": 942.2999877929688,
+        "y": 650.800048828125,
+        "wires": [
+            [
+                "3c6a0a47.028ee6"
+            ]
+        ]
+    },
+    {
+        "id": "b36d6245.03ff3",
+        "type": "join",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "timeout": "",
+        "count": "2",
+        "x": 1409.300106048584,
+        "y": 873.9999666213989,
+        "wires": [
+            [
+                "28361fc7.9326"
+            ]
+        ]
+    },
+    {
+        "id": "3a937381.d781fc",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "sentence",
+        "func": "var word = msg.payload.split(' ')\nfor(var i=0; i<word.length;i++){\n    word[i] = word[i].replace(/[^a-zA-Z ]/g, \"\");\n    word[i] = word[i].toLowerCase();\n}\nreturn {\n    topic : 'sentence',\n    payload : word\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1288.2999877929688,
+        "y": 732,
+        "wires": [
+            [
+                "b36d6245.03ff3",
+                "9bd9a347.1c804"
+            ]
+        ]
+    },
+    {
+        "id": "28361fc7.9326",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "keyword",
+        "func": "var collect = msg.payload.word\nvar word = msg.payload.sentence\n\nconsole.log(msg);\nvar i=0;\nvar count = 0;\nvar out = 'I don\\'t know';\nvar end = 0;\nfor(var i=0; i<word.length; i++){\n    if(collect.indexOf(word[i]) != -1){\n        out = word[i]\n        break;\n    }\n}\nreturn {\n    topic: 'event',\n    payload: out,\n};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1590,
+        "y": 862.9999389648438,
+        "wires": [
+            [
+                "348a3d87.d0ec32"
+            ]
+        ]
+    },
+    {
+        "id": "9acc4610.747b48",
+        "type": "inject",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "x": 256.0000171661377,
+        "y": 347.99999618530273,
+        "wires": [
+            [
+                "519c082a.7a1988",
+                "6f5f9c8b.2639c4",
+                "e701cb76.bfe4b8"
+            ]
+        ]
+    },
+    {
+        "id": "519c082a.7a1988",
+        "type": "template",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "\"schedule a meeting with Tom and Jane on may five from thirteen to fourteen \"",
+        "x": 866,
+        "y": 316,
+        "wires": [
+            [
+                "a74bcd6d.cbfd7",
+                "e597fab4.abe788",
+                "3a937381.d781fc"
+            ]
+        ]
+    },
+    {
+        "id": "3c6a0a47.028ee6",
+        "type": "function",
+        "z": "eb5a1c14.7922a8",
+        "name": "keyword",
+        "func": "var word=msg.payload\nvar store = word.split('\\n')\nfor(var i = 0; i<store.length; i++){\n    store[i] = store[i].trim()\n}\nreturn {\ntopic: 'word',\npayload: store\n};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1239.777629852295,
+        "y": 923.5555400848389,
+        "wires": [
+            [
+                "b36d6245.03ff3",
+                "f698bbfb.3260a8"
+            ]
+        ]
+    },
+    {
+        "id": "f698bbfb.3260a8",
+        "type": "debug",
+        "z": "eb5a1c14.7922a8",
+        "name": "debug1",
+        "active": true,
+        "console": "false",
+        "complete": "true",
+        "x": 1400.0555725097656,
+        "y": 993.3333358764648,
+        "wires": []
+    },
+    {
+        "id": "9bd9a347.1c804",
+        "type": "debug",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "payload",
+        "x": 1445.6111755371094,
+        "y": 658.7777633666992,
+        "wires": []
+    },
+    {
+        "id": "ccf25188.9ad81",
+        "type": "switch",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nnull"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "outputs": 2,
+        "x": 2040,
+        "y": 473,
+        "wires": [
+            [
+                "9a140314.7772e"
+            ],
+            [
+                "766bb884.da1f98"
+            ]
+        ]
+    },
+    {
+        "id": "91f64b5d.2726c8",
+        "type": "debug",
+        "z": "eb5a1c14.7922a8",
+        "name": "debug_stt",
+        "active": true,
+        "console": "false",
+        "complete": "true",
+        "x": 1042.142857142857,
+        "y": 59.99999999999999,
+        "wires": []
+    },
+    {
+        "id": "3da6231b.074f5c",
+        "type": "debug",
+        "z": "eb5a1c14.7922a8",
+        "name": "debuggg",
+        "active": true,
+        "console": "false",
+        "complete": "true",
+        "x": 1729.285774230957,
+        "y": 45.71427536010742,
+        "wires": []
+    },
+    {
+        "id": "c56eac59.9f9cf",
+        "type": "debug",
+        "z": "eb5a1c14.7922a8",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "false",
+        "x": 1831.499984741211,
+        "y": 105.39999389648438,
+        "wires": []
+    }
+]
